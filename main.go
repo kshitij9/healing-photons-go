@@ -6,6 +6,7 @@ import (
 	"healing_photons/internal/handlers"
 	"log"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,6 +26,15 @@ func main() {
 
 	// Setup Gin router
 	router := gin.Default()
+
+	// Add CORS middleware
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"}, // Allow all origins
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 
 	// Initialize routes
 	handlers.SetupRoutes(router, db)
