@@ -4,7 +4,7 @@ import "time"
 
 // User represents the user data model
 type Stock struct {
-	StockID       int       `json:"stock_id"`
+	StockID       string    `json:"stock_id"`
 	SellerName    string    `json:"seller_name"`
 	OriginCountry string    `json:"origin_country"`
 	Weight        float32   `json:"weight"`
