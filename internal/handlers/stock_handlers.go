@@ -52,19 +52,43 @@ func CreateStock(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	err := db.QueryRow(`
+	result, err := db.Exec(`
 		INSERT INTO stock (stock_id, seller_name, origin_country, weight, date, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-		RETURNING stock_id, created_at, updated_at`,
+		VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
 		stock.SellerName,
 		stock.OriginCountry,
 		stock.Weight,
 		stock.Date,
-	).Scan(&stock.StockID, &stock.CreatedAt, &stock.UpdatedAt)
+	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Get the last inserted ID
+	lastID, err := result.LastInsertId()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// If you need the complete record, fetch it
+	err = db.QueryRow(`
+		SELECT stock_id, seller_name, origin_country, weight, date, created_at, updated_at 
+		FROM stock WHERE stock_id = ?`, lastID).Scan(
+		&stock.StockID,
+		&stock.SellerName,
+		&stock.OriginCountry,
+		&stock.Weight,
+		&stock.Date,
+		&stock.CreatedAt,
+		&stock.UpdatedAt,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusCreated, stock)
 }
 
