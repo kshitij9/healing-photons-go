@@ -55,6 +55,7 @@ func CreateStock(c *gin.Context, db *sql.DB) {
 	result, err := db.Exec(`
 		INSERT INTO stock (stock_id, seller_name, origin_country, weight, date, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
+		stock.StockID,
 		stock.SellerName,
 		stock.OriginCountry,
 		stock.Weight,
