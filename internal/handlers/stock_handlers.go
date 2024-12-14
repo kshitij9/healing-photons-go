@@ -53,7 +53,7 @@ func CreateStock(c *gin.Context, db *sql.DB) {
 	}
 
 	err := db.QueryRow(`
-		INSERT INTO stock (seller_id, seller_name, origin_country, weight, date, created_at, updated_at)
+		INSERT INTO stock (stock_id, seller_name, origin_country, weight, date, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
 		RETURNING stock_id, created_at, updated_at`,
 		stock.SellerName,
