@@ -72,15 +72,14 @@ func CreateHumidifier(c *gin.Context, db *sql.DB) {
 
 	err := db.QueryRow(`
         INSERT INTO humidifier (id, stock_id, weight, created_at, updated_at)
-        VALUES ($1, $2, $3, NOW(), NOW())
-        RETURNING id, created_at, updated_at`,
+        VALUES ($1, $2, $3, NOW(), NOW())`,
 		humidifier.ID,
 		humidifier.StockID,
 		humidifier.Weight,
-	).Scan(&humidifier.ID, &humidifier.CreatedAt, &humidifier.UpdatedAt)
+	)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 	c.JSON(http.StatusCreated, humidifier)
