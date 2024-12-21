@@ -72,7 +72,7 @@ func CreateHumidifier(c *gin.Context, db *sql.DB) {
 
 	err := db.QueryRow(`
         INSERT INTO humidifier (id, stock_id, weight, created_at, updated_at)
-        VALUES ($1, $2, $3, NOW(), NOW())`,
+        VALUES (?, ?, ?, NOW(), NOW())`,
 		humidifier.ID,
 		humidifier.StockID,
 		humidifier.Weight,
