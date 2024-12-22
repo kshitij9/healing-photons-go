@@ -4,8 +4,8 @@ import "time"
 
 // User represents the user data model
 type PeelingMachine struct {
-	ID           int       `json:"id"`
-	HumidifierID int       `json:"humidifier_id"`
+	ID           string    `json:"id"`
+	HumidifierID string    `json:"humidifier_id"`
 	Wholes       float32   `json:"wholes"`
 	K            float32   `json:"k"`
 	Lwp          float32   `json:"lwp"`
