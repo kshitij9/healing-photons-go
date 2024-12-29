@@ -86,7 +86,7 @@ func CreateColorSort(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	result, err := db.Exec(`
+	_, err := db.Exec(`
         INSERT INTO color_sort (
             id, stock_id, peel_id, acc_wholes, acc_k, acc_lwp, acc_swp, 
             acc_bb, acc_bbnp, acc_husk, created_at, updated_at
