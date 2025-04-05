@@ -40,7 +40,7 @@ func GetAllHumidifiers(c *gin.Context, db *sql.DB) {
 
 // GetHumidifier - Get single humidifier record
 func GetHumidifier(c *gin.Context, db *sql.DB) {
-	id := c.Param("stock_id")
+	id := c.Param("id")
 
 	var humidifier models.Humidifier
 	err := db.QueryRow(`
