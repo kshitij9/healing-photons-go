@@ -19,9 +19,9 @@ func GetAllWeightTypes(c *gin.Context, db *sql.DB) {
 	}
 	defer rows.Close()
 
-	var weightTypes []models.WeightType
+	var weightTypes []models.WeightTypes
 	for rows.Next() {
-		var weightType models.WeightType
+		var weightType models.WeightTypes
 		if err := rows.Scan(
 			&weightType.ID,
 			&weightType.Type,
@@ -38,7 +38,7 @@ func GetAllWeightTypes(c *gin.Context, db *sql.DB) {
 func GetWeightType(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
 
-	var weightType models.WeightType
+	var weightType models.WeightTypes
 	err := db.QueryRow(`
         SELECT id, type 
         FROM weight_types WHERE id = $1`, id).Scan(
@@ -58,7 +58,7 @@ func GetWeightType(c *gin.Context, db *sql.DB) {
 
 // CreateWeightType - Create new weight type record
 func CreateWeightType(c *gin.Context, db *sql.DB) {
-	var weightType models.WeightType
+	var weightType models.WeightTypes
 	if err := c.ShouldBindJSON(&weightType); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -82,7 +82,7 @@ func CreateWeightType(c *gin.Context, db *sql.DB) {
 // UpdateWeightType - Update existing weight type record
 func UpdateWeightType(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
-	var weightType models.WeightType
+	var weightType models.WeightTypes
 	if err := c.ShouldBindJSON(&weightType); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -151,13 +151,13 @@ func GetWeightTypesByUsage(c *gin.Context, db *sql.DB) {
 	defer rows.Close()
 
 	var weightTypes []struct {
-		models.WeightType
+		models.WeightTypes
 		UsageCount int `json:"usage_count"`
 	}
 
 	for rows.Next() {
 		var wt struct {
-			models.WeightType
+			models.WeightTypes
 			UsageCount int `json:"usage_count"`
 		}
 		if err := rows.Scan(

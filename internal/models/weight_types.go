@@ -1,6 +1,6 @@
 package models
 
-type WeightType struct {
+type WeightTypes struct {
 	ID   string `json:"id"`
 	Type string `json:"type"`
 }
