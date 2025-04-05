@@ -11,8 +11,8 @@ import (
 // GetAllColorSorts - Get all color sort records
 func GetAllColorSorts(c *gin.Context, db *sql.DB) {
 	rows, err := db.Query(`
-        SELECT id, stock_id, peel_id, acc_wholes, acc_k, acc_lwp, acc_swp, 
-               acc_bb, acc_bbnp, acc_husk, created_at, updated_at 
+        SELECT id, peel_id, stock_id, weight_type_id, accepted_weight, 
+               sort_counter, created_at, updated_at 
         FROM color_sort`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -25,15 +25,11 @@ func GetAllColorSorts(c *gin.Context, db *sql.DB) {
 		var colorSort models.ColorSort
 		if err := rows.Scan(
 			&colorSort.ID,
+			&colorSort.PeelID,
 			&colorSort.StockID,
-			&colorSort.PeelId,
-			&colorSort.AccWholes,
-			&colorSort.AccK,
-			&colorSort.AccLwp,
-			&colorSort.AccSwp,
-			&colorSort.AccBb,
-			&colorSort.AccBbnp,
-			&colorSort.AccHusk,
+			&colorSort.WeightTypeID,
+			&colorSort.AcceptedWeight,
+			&colorSort.SortCounter,
 			&colorSort.CreatedAt,
 			&colorSort.UpdatedAt,
 		); err != nil {
@@ -47,23 +43,19 @@ func GetAllColorSorts(c *gin.Context, db *sql.DB) {
 
 // GetColorSort - Get single color sort record
 func GetColorSort(c *gin.Context, db *sql.DB) {
-	id := c.Param("stock_id")
+	id := c.Param("id")
 
 	var colorSort models.ColorSort
 	err := db.QueryRow(`
-        SELECT id, stock_id, peel_id, acc_wholes, acc_k, acc_lwp, acc_swp, 
-               acc_bb, acc_bbnp, acc_husk, created_at, updated_at 
-        FROM color_sort WHERE stock_id = $1`, id).Scan(
+        SELECT id, peel_id, stock_id, weight_type_id, accepted_weight, 
+               sort_counter, created_at, updated_at 
+        FROM color_sort WHERE id = $1`, id).Scan(
 		&colorSort.ID,
+		&colorSort.PeelID,
 		&colorSort.StockID,
-		&colorSort.PeelId,
-		&colorSort.AccWholes,
-		&colorSort.AccK,
-		&colorSort.AccLwp,
-		&colorSort.AccSwp,
-		&colorSort.AccBb,
-		&colorSort.AccBbnp,
-		&colorSort.AccHusk,
+		&colorSort.WeightTypeID,
+		&colorSort.AcceptedWeight,
+		&colorSort.SortCounter,
 		&colorSort.CreatedAt,
 		&colorSort.UpdatedAt,
 	)
@@ -86,35 +78,20 @@ func CreateColorSort(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	_, err := db.Exec(`
+	err := db.QueryRow(`
         INSERT INTO color_sort (
-            id, stock_id, peel_id, acc_wholes, acc_k, acc_lwp, acc_swp, 
-            acc_bb, acc_bbnp, acc_husk, created_at, updated_at
+            id, peel_id, stock_id, weight_type_id, accepted_weight, 
+            sort_counter, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
-        ON CONFLICT (id) 
-        DO UPDATE SET 
-            stock_id = EXCLUDED.stock_id,
-            peel_id = EXCLUDED.peel_id,
-            acc_wholes = EXCLUDED.acc_wholes,
-            acc_k = EXCLUDED.acc_k,
-            acc_lwp = EXCLUDED.acc_lwp,
-            acc_swp = EXCLUDED.acc_swp,
-            acc_bb = EXCLUDED.acc_bb,
-            acc_bbnp = EXCLUDED.acc_bbnp,
-            acc_husk = EXCLUDED.acc_husk,
-            updated_at = NOW()`,
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        RETURNING created_at, updated_at`,
 		colorSort.ID,
+		colorSort.PeelID,
 		colorSort.StockID,
-		colorSort.PeelId,
-		colorSort.AccWholes,
-		colorSort.AccK,
-		colorSort.AccLwp,
-		colorSort.AccSwp,
-		colorSort.AccBb,
-		colorSort.AccBbnp,
-		colorSort.AccHusk,
-	)
+		colorSort.WeightTypeID,
+		colorSort.AcceptedWeight,
+		colorSort.SortCounter,
+	).Scan(&colorSort.CreatedAt, &colorSort.UpdatedAt)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -134,26 +111,18 @@ func UpdateColorSort(c *gin.Context, db *sql.DB) {
 
 	result, err := db.Exec(`
         UPDATE color_sort
-        SET stock_id = $1,
-            peel_id = $2,
-            acc_wholes = $3,
-            acc_k = $4,
-            acc_lwp = $5,
-            acc_swp = $6,
-            acc_bb = $7,
-            acc_bbnp = $8,
-            acc_husk = $9,
+        SET peel_id = $1,
+            stock_id = $2,
+            weight_type_id = $3,
+            accepted_weight = $4,
+            sort_counter = $5,
             updated_at = NOW()
-        WHERE id = $10`,
+        WHERE id = $6`,
+		colorSort.PeelID,
 		colorSort.StockID,
-		colorSort.PeelId,
-		colorSort.AccWholes,
-		colorSort.AccK,
-		colorSort.AccLwp,
-		colorSort.AccSwp,
-		colorSort.AccBb,
-		colorSort.AccBbnp,
-		colorSort.AccHusk,
+		colorSort.WeightTypeID,
+		colorSort.AcceptedWeight,
+		colorSort.SortCounter,
 		id,
 	)
 	if err != nil {
@@ -197,6 +166,113 @@ func DeleteColorSort(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, gin.H{"message": "Record deleted successfully"})
 }
 
+// GetColorSortsByStock - Get color sort records for a specific stock ID with optional counter filter
+func GetColorSortsByStock(c *gin.Context, db *sql.DB) {
+	stockID := c.Param("stockId")
+	counter := c.Query("counter") // Optional query parameter
+
+	var query string
+	var args []interface{}
+
+	if counter != "" {
+		query = `
+            SELECT id, peel_id, stock_id, weight_type_id, accepted_weight, 
+                   sort_counter, created_at, updated_at 
+            FROM color_sort 
+            WHERE stock_id = $1 AND sort_counter = $2
+            ORDER BY created_at DESC`
+		args = []interface{}{stockID, counter}
+	} else {
+		query = `
+            SELECT id, peel_id, stock_id, weight_type_id, accepted_weight, 
+                   sort_counter, created_at, updated_at 
+            FROM color_sort 
+            WHERE stock_id = $1
+            ORDER BY created_at DESC`
+		args = []interface{}{stockID}
+	}
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var colorSorts []models.ColorSort
+	for rows.Next() {
+		var colorSort models.ColorSort
+		if err := rows.Scan(
+			&colorSort.ID,
+			&colorSort.PeelID,
+			&colorSort.StockID,
+			&colorSort.WeightTypeID,
+			&colorSort.AcceptedWeight,
+			&colorSort.SortCounter,
+			&colorSort.CreatedAt,
+			&colorSort.UpdatedAt,
+		); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		colorSorts = append(colorSorts, colorSort)
+	}
+
+	if len(colorSorts) == 0 {
+		c.JSON(http.StatusOK, []models.ColorSort{}) // Return empty array instead of null
+		return
+	}
+
+	c.JSON(http.StatusOK, colorSorts)
+}
+
+// GetAcceptedWeightSummary - Get summary of accepted weights for a stock ID and counter
+func GetAcceptedWeightSummary(c *gin.Context, db *sql.DB) {
+	stockID := c.Param("stockId")
+	counter := c.Param("counter")
+
+	var summary struct {
+		StockID       string  `json:"stock_id"`
+		SortCounter   int     `json:"sort_counter"`
+		TotalAccepted float64 `json:"total_accepted_weight"`
+		RecordCount   int     `json:"record_count"`
+	}
+
+	err := db.QueryRow(`
+        SELECT 
+            stock_id,
+            sort_counter,
+            COALESCE(SUM(accepted_weight), 0) as total_accepted_weight,
+            COUNT(*) as record_count
+        FROM color_sort 
+        WHERE stock_id = $1 AND sort_counter = $2
+        GROUP BY stock_id, sort_counter`,
+		stockID, counter,
+	).Scan(
+		&summary.StockID,
+		&summary.SortCounter,
+		&summary.TotalAccepted,
+		&summary.RecordCount,
+	)
+
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusOK, gin.H{
+			"stock_id":              stockID,
+			"sort_counter":          counter,
+			"total_accepted_weight": 0,
+			"record_count":          0,
+		})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, summary)
+}
+
 // SetupColorSortRoutes - Setup all routes for color sort
 func SetupColorSortRoutes(router *gin.Engine, db *sql.DB) {
 	router.GET("/color-sorts", func(c *gin.Context) { GetAllColorSorts(c, db) })
@@ -204,4 +280,6 @@ func SetupColorSortRoutes(router *gin.Engine, db *sql.DB) {
 	router.POST("/color-sorts", func(c *gin.Context) { CreateColorSort(c, db) })
 	router.PUT("/color-sorts/:id", func(c *gin.Context) { UpdateColorSort(c, db) })
 	router.DELETE("/color-sorts/:id", func(c *gin.Context) { DeleteColorSort(c, db) })
+	router.GET("/color-sorts/stock/:stockId", func(c *gin.Context) { GetColorSortsByStock(c, db) })
+	router.GET("/color-sorts/stock/:stockId/counter/:counter/summary", func(c *gin.Context) { GetAcceptedWeightSummary(c, db) })
 }

@@ -11,8 +11,8 @@ import (
 // GetAllPeelingMachineData - Get all peeling machine records
 func GetAllPeelingMachineData(c *gin.Context, db *sql.DB) {
 	rows, err := db.Query(`
-        SELECT id, humidifier_id, wholes, k, lwp, swp, bb, bbnp, 
-               husk, stock_id, created_at, updated_at 
+        SELECT id, humidifier_id, stock_id, weight_type_id, weight, 
+               created_at, updated_at 
         FROM peeling_machine`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -26,14 +26,9 @@ func GetAllPeelingMachineData(c *gin.Context, db *sql.DB) {
 		if err := rows.Scan(
 			&machine.ID,
 			&machine.HumidifierID,
-			&machine.Wholes,
-			&machine.K,
-			&machine.Lwp,
-			&machine.Swp,
-			&machine.Bb,
-			&machine.Bbnp,
-			&machine.Husk,
 			&machine.StockID,
+			&machine.WeightTypeID,
+			&machine.Weight,
 			&machine.CreatedAt,
 			&machine.UpdatedAt,
 		); err != nil {
@@ -51,19 +46,14 @@ func GetPeelingMachine(c *gin.Context, db *sql.DB) {
 
 	var machine models.PeelingMachine
 	err := db.QueryRow(`
-        SELECT id, humidifier_id, wholes, k, lwp, swp, bb, bbnp, 
-               husk, stock_id, created_at, updated_at 
+        SELECT id, humidifier_id, stock_id, weight_type_id, weight, 
+               created_at, updated_at 
         FROM peeling_machine WHERE id = $1`, id).Scan(
 		&machine.ID,
 		&machine.HumidifierID,
-		&machine.Wholes,
-		&machine.K,
-		&machine.Lwp,
-		&machine.Swp,
-		&machine.Bb,
-		&machine.Bbnp,
-		&machine.Husk,
 		&machine.StockID,
+		&machine.WeightTypeID,
+		&machine.Weight,
 		&machine.CreatedAt,
 		&machine.UpdatedAt,
 	)
@@ -88,18 +78,13 @@ func CreatePeelingMachine(c *gin.Context, db *sql.DB) {
 
 	err := db.QueryRow(`
         INSERT INTO peeling_machine (
-            humidifier_id, wholes, k, lwp, swp, bb, bbnp, husk, stock_id, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+            humidifier_id, stock_id, weight_type_id, weight, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, NOW(), NOW())
         RETURNING id, created_at, updated_at`,
 		machine.HumidifierID,
-		machine.Wholes,
-		machine.K,
-		machine.Lwp,
-		machine.Swp,
-		machine.Bb,
-		machine.Bbnp,
-		machine.Husk,
 		machine.StockID,
+		machine.WeightTypeID,
+		machine.Weight,
 	).Scan(&machine.ID, &machine.CreatedAt, &machine.UpdatedAt)
 
 	if err != nil {
@@ -121,25 +106,15 @@ func UpdatePeelingMachine(c *gin.Context, db *sql.DB) {
 	result, err := db.Exec(`
         UPDATE peeling_machine 
         SET humidifier_id = $1,
-            wholes = $2,
-            k = $3,
-            lwp = $4,
-            swp = $5,
-            bb = $6,
-            bbnp = $7,
-            husk = $8,
-            stock_id = $9,
+            stock_id = $2,
+            weight_type_id = $3,
+            weight = $4,
             updated_at = NOW()
-        WHERE id = $10`,
+        WHERE id = $5`,
 		machine.HumidifierID,
-		machine.Wholes,
-		machine.K,
-		machine.Lwp,
-		machine.Swp,
-		machine.Bb,
-		machine.Bbnp,
-		machine.Husk,
 		machine.StockID,
+		machine.WeightTypeID,
+		machine.Weight,
 		id,
 	)
 	if err != nil {
@@ -183,6 +158,48 @@ func DeletePeelingMachine(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, gin.H{"message": "Record deleted successfully"})
 }
 
+// GetPeelingMachinesByStockID - Get all peeling machine records for a specific stock ID
+func GetPeelingMachinesByStockID(c *gin.Context, db *sql.DB) {
+	stockID := c.Param("stockId")
+
+	rows, err := db.Query(`
+        SELECT id, humidifier_id, stock_id, weight_type_id, weight, 
+               created_at, updated_at 
+        FROM peeling_machine 
+        WHERE stock_id = $1
+        ORDER BY created_at DESC`, stockID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var machines []models.PeelingMachine
+	for rows.Next() {
+		var machine models.PeelingMachine
+		if err := rows.Scan(
+			&machine.ID,
+			&machine.HumidifierID,
+			&machine.StockID,
+			&machine.WeightTypeID,
+			&machine.Weight,
+			&machine.CreatedAt,
+			&machine.UpdatedAt,
+		); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		machines = append(machines, machine)
+	}
+
+	if len(machines) == 0 {
+		c.JSON(http.StatusOK, []models.PeelingMachine{}) // Return empty array instead of null
+		return
+	}
+
+	c.JSON(http.StatusOK, machines)
+}
+
 // SetupPeelingMachineRoutes - Setup all routes for peeling machine
 func SetupPeelingMachineRoutes(router *gin.Engine, db *sql.DB) {
 	router.GET("/peeling-machines", func(c *gin.Context) { GetAllPeelingMachineData(c, db) })
@@ -190,4 +207,5 @@ func SetupPeelingMachineRoutes(router *gin.Engine, db *sql.DB) {
 	router.POST("/peeling-machines", func(c *gin.Context) { CreatePeelingMachine(c, db) })
 	router.PUT("/peeling-machines/:id", func(c *gin.Context) { UpdatePeelingMachine(c, db) })
 	router.DELETE("/peeling-machines/:id", func(c *gin.Context) { DeletePeelingMachine(c, db) })
+	router.GET("/peeling-machines/stock/:stockId", func(c *gin.Context) { GetPeelingMachinesByStockID(c, db) })
 }

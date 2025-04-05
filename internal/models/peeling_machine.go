@@ -2,18 +2,12 @@ package models
 
 import "time"
 
-// User represents the user data model
 type PeelingMachine struct {
-	ID           string    `json:"id"`
-	HumidifierID string    `json:"humidifier_id"`
-	Wholes       float32   `json:"wholes"`
-	K            float32   `json:"k"`
-	Lwp          float32   `json:"lwp"`
-	Swp          float32   `json:"swp"`
-	Bb           float32   `json:"bb"`
-	Bbnp         float32   `json:"bbnp"`
-	Husk         float32   `json:"husk"`
-	StockID      int       `json:"stock_id"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID           string    `json:"id" db:"id"`
+	HumidifierID string    `json:"humidifier_id" db:"humidifier_id"`
+	StockID      *string   `json:"stock_id,omitempty" db:"stock_id"`
+	WeightTypeID int       `json:"weight_type_id" db:"weight_type_id"`
+	Weight       float64   `json:"weight" db:"weight"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }

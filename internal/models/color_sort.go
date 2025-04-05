@@ -3,17 +3,12 @@ package models
 import "time"
 
 type ColorSort struct {
-	ID          string    `json:"id"`
-	StockID     string    `json:"stock_id"`
-	PeelId      string    `json:"peel_id"`
-	AccWholes   float32   `json:"acc_wholes"`
-	AccK        float32   `json:"acc_k"`
-	AccLwp      float32   `json:"acc_lwp"`
-	AccSwp      float32   `json:"acc_swp"`
-	AccBb       float32   `json:"acc_bb"`
-	AccBbnp     float32   `json:"acc_bbnp"`
-	AccHusk     float32   `json:"acc_husk"`
-	SortCounter int       `json:"sort_counter"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID             string    `json:"id" db:"id"`
+	PeelID         *string   `json:"peel_id,omitempty" db:"peel_id"`
+	StockID        *string   `json:"stock_id,omitempty" db:"stock_id"`
+	WeightTypeID   int       `json:"weight_type_id" db:"weight_type_id"`
+	AcceptedWeight float64   `json:"accepted_weight" db:"accepted_weight"`
+	SortCounter    int       `json:"sort_counter" db:"sort_counter"`
+	CreatedAt      time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
 }
