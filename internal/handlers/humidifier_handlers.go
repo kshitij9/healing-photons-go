@@ -44,7 +44,7 @@ func GetHumidifier(c *gin.Context, db *sql.DB) {
 	var humidifier models.Humidifier
 	err := db.QueryRow(`
         SELECT id, stock_id, weight, created_at, updated_at 
-        FROM humidifier WHERE stock_id = $1`, id).Scan(
+        FROM humidifier WHERE stock_id = ?`, id).Scan(
 		&humidifier.ID,
 		&humidifier.StockID,
 		&humidifier.Weight,
@@ -74,8 +74,7 @@ func CreateHumidifier(c *gin.Context, db *sql.DB) {
         INSERT INTO humidifier (
             id, stock_id, weight, created_at, updated_at
         )
-        VALUES (?, ?, ?, NOW(), NOW())
-        RETURNING created_at, updated_at`,
+        VALUES (?, ?, ?, NOW(), NOW())`,
 		humidifier.ID,
 		humidifier.StockID,
 		humidifier.Weight,
@@ -99,10 +98,10 @@ func UpdateHumidifier(c *gin.Context, db *sql.DB) {
 
 	result, err := db.Exec(`
         UPDATE humidifier
-        SET stock_id = $1,
-            weight = $2,
+        SET stock_id = ?,
+            weight = ?,
             updated_at = NOW()
-        WHERE id = $3`,
+        WHERE id = ?`,
 		humidifier.StockID,
 		humidifier.Weight,
 		id,
