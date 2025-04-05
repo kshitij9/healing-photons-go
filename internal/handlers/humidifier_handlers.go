@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"healing_photons/internal/models"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -70,7 +71,7 @@ func CreateHumidifier(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	err := db.QueryRow(`
+	_, err := db.Exec(`
         INSERT INTO humidifier (
             id, stock_id, weight, created_at, updated_at
         )
@@ -78,12 +79,17 @@ func CreateHumidifier(c *gin.Context, db *sql.DB) {
 		humidifier.ID,
 		humidifier.StockID,
 		humidifier.Weight,
-	).Scan(&humidifier.CreatedAt, &humidifier.UpdatedAt)
+	)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Set timestamps manually since we can't get them from RETURNING
+	humidifier.CreatedAt = time.Now()
+	humidifier.UpdatedAt = time.Now()
+
 	c.JSON(http.StatusCreated, humidifier)
 }
 
