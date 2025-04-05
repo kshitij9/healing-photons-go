@@ -38,6 +38,7 @@ func main() {
 
 	// Initialize routes
 	handlers.SetupRoutes(router, db)
+	handlers.SetupWeightTypeRoutes(router, db)
 	handlers.SetupPeelingMachineRoutes(router, db)
 	handlers.SetupHumidifierRoutes(router, db)
 
