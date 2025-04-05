@@ -49,7 +49,7 @@ func GetMachineGrading(c *gin.Context, db *sql.DB) {
 	err := db.QueryRow(`
         SELECT id, color_sort_id, stock_id, weight_type_id, 
                grader_machine_outputs_id, weight, created_at, updated_at 
-        FROM machine_grading WHERE id = $1`, id).Scan(
+        FROM machine_grading WHERE id = ?`, id).Scan(
 		&grading.ID,
 		&grading.ColorSortID,
 		&grading.StockID,
@@ -83,7 +83,7 @@ func CreateMachineGrading(c *gin.Context, db *sql.DB) {
             id, color_sort_id, stock_id, weight_type_id, 
             grader_machine_outputs_id, weight, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
         RETURNING created_at, updated_at`,
 		grading.ID,
 		grading.ColorSortID,
@@ -111,13 +111,13 @@ func UpdateMachineGrading(c *gin.Context, db *sql.DB) {
 
 	result, err := db.Exec(`
         UPDATE machine_grading
-        SET color_sort_id = $1,
-            stock_id = $2,
-            weight_type_id = $3,
-            grader_machine_outputs_id = $4,
-            weight = $5,
+        SET color_sort_id = ?,
+            stock_id = ?,
+            weight_type_id = ?,
+            grader_machine_outputs_id = ?,
+            weight = ?,
             updated_at = NOW()
-        WHERE id = $6`,
+        WHERE id = ?`,
 		grading.ColorSortID,
 		grading.StockID,
 		grading.WeightTypeID,
@@ -147,7 +147,7 @@ func UpdateMachineGrading(c *gin.Context, db *sql.DB) {
 func DeleteMachineGrading(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
 
-	result, err := db.Exec("DELETE FROM machine_grading WHERE id = $1", id)
+	result, err := db.Exec("DELETE FROM machine_grading WHERE id = ?", id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -174,7 +174,7 @@ func GetMachineGradingsByStock(c *gin.Context, db *sql.DB) {
         SELECT id, color_sort_id, stock_id, weight_type_id, 
                grader_machine_outputs_id, weight, created_at, updated_at 
         FROM machine_grading 
-        WHERE stock_id = $1
+        WHERE stock_id = ?
         ORDER BY created_at DESC`, stockID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -225,7 +225,7 @@ func GetWeightSummary(c *gin.Context, db *sql.DB) {
             COALESCE(SUM(weight), 0) as total_weight,
             COUNT(*) as record_count
         FROM machine_grading 
-        WHERE stock_id = $1
+        WHERE stock_id = ?
         GROUP BY stock_id`,
 		stockID,
 	).Scan(

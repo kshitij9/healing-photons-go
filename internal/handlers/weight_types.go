@@ -41,7 +41,7 @@ func GetWeightType(c *gin.Context, db *sql.DB) {
 	var weightType models.WeightTypes
 	err := db.QueryRow(`
         SELECT id, type 
-        FROM weight_types WHERE id = $1`, id).Scan(
+        FROM weight_types WHERE id = ?`, id).Scan(
 		&weightType.ID,
 		&weightType.Type,
 	)
@@ -64,18 +64,24 @@ func CreateWeightType(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	err := db.QueryRow(`
+	result, err := db.Exec(`
         INSERT INTO weight_types (id, type)
-        VALUES ($1, $2)
-        RETURNING id`,
+        VALUES (?, ?)`,
 		weightType.ID,
 		weightType.Type,
-	).Scan(&weightType.ID)
-
+	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	lastID, err := result.LastInsertId()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	weightType.ID = string(lastID)
 	c.JSON(http.StatusCreated, weightType)
 }
 
@@ -90,8 +96,8 @@ func UpdateWeightType(c *gin.Context, db *sql.DB) {
 
 	result, err := db.Exec(`
         UPDATE weight_types
-        SET type = $1
-        WHERE id = $2`,
+        SET type = ?
+        WHERE id = ?`,
 		weightType.Type,
 		id,
 	)
@@ -117,7 +123,7 @@ func UpdateWeightType(c *gin.Context, db *sql.DB) {
 func DeleteWeightType(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
 
-	result, err := db.Exec("DELETE FROM weight_types WHERE id = $1", id)
+	result, err := db.Exec("DELETE FROM weight_types WHERE id = ?", id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

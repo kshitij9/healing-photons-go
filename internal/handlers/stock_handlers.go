@@ -24,7 +24,7 @@ func GetStock(c *gin.Context, db *sql.DB) {
 	var stock models.Stock
 	err := db.QueryRow(`
 		SELECT stock_id, seller_name, origin_country, weight, date, created_at, updated_at 
-		FROM stocks WHERE stock_id = $1`, id).Scan(
+		FROM stocks WHERE stock_id = ?`, id).Scan(
 		&stock.StockID,
 		&stock.SellerName,
 		&stock.OriginCountry,
@@ -52,46 +52,23 @@ func CreateStock(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	result, err := db.Exec(`
-		INSERT INTO stock (stock_id, seller_name, origin_country, weight, date, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-		ON CONFLICT (stock_id) 
-		DO UPDATE SET 
-			seller_name = EXCLUDED.seller_name,
-			origin_country = EXCLUDED.origin_country,
-			weight = EXCLUDED.weight,
-			date = EXCLUDED.date,
+	err := db.QueryRow(`
+		INSERT INTO stock (
+			stock_id, seller_name, origin_country, weight, date, created_at, updated_at
+		)
+		VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+		ON DUPLICATE KEY UPDATE
+			seller_name = VALUES(seller_name),
+			origin_country = VALUES(origin_country),
+			weight = VALUES(weight),
+			date = VALUES(date),
 			updated_at = NOW()`,
 		stock.StockID,
 		stock.SellerName,
 		stock.OriginCountry,
 		stock.Weight,
 		stock.Date,
-	)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Get the last inserted ID
-	lastID, err := result.LastInsertId()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// If you need the complete record, fetch it
-	err = db.QueryRow(`
-		SELECT stock_id, seller_name, origin_country, weight, date, created_at, updated_at 
-		FROM stock WHERE stock_id = ?`, lastID).Scan(
-		&stock.StockID,
-		&stock.SellerName,
-		&stock.OriginCountry,
-		&stock.Weight,
-		&stock.Date,
-		&stock.CreatedAt,
-		&stock.UpdatedAt,
-	)
+	).Scan(&stock.CreatedAt, &stock.UpdatedAt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -111,12 +88,12 @@ func UpdateStock(c *gin.Context, db *sql.DB) {
 
 	result, err := db.Exec(`
 		UPDATE stock
-		SET seller_name = $1, 
-			origin_country = $2, 
-			weight = $3, 
-			date = $4, 
+		SET seller_name = ?, 
+			origin_country = ?, 
+			weight = ?, 
+			date = ?, 
 			updated_at = NOW()
-		WHERE stock_id = $6`,
+		WHERE stock_id = ?`,
 		stock.SellerName,
 		stock.OriginCountry,
 		stock.Weight,
@@ -144,7 +121,7 @@ func UpdateStock(c *gin.Context, db *sql.DB) {
 func DeleteStock(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
 
-	result, err := db.Exec("DELETE FROM stock WHERE stock_id = $1", id)
+	result, err := db.Exec("DELETE FROM stock WHERE stock_id = ?", id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

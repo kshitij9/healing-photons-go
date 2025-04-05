@@ -70,13 +70,16 @@ func CreateHumidifier(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	_, err := db.Exec(`
-        INSERT INTO humidifier (id, stock_id, weight, created_at, updated_at)
-        VALUES (?, ?, ?, NOW(), NOW())`,
+	err := db.QueryRow(`
+        INSERT INTO humidifier (
+            id, stock_id, weight, created_at, updated_at
+        )
+        VALUES (?, ?, ?, NOW(), NOW())
+        RETURNING created_at, updated_at`,
 		humidifier.ID,
 		humidifier.StockID,
 		humidifier.Weight,
-	)
+	).Scan(&humidifier.CreatedAt, &humidifier.UpdatedAt)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -126,7 +129,7 @@ func UpdateHumidifier(c *gin.Context, db *sql.DB) {
 func DeleteHumidifier(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
 
-	result, err := db.Exec("DELETE FROM humidifier WHERE id = $1", id)
+	result, err := db.Exec("DELETE FROM humidifier WHERE id = ?", id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

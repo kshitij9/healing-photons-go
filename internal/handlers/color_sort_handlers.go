@@ -49,7 +49,7 @@ func GetColorSort(c *gin.Context, db *sql.DB) {
 	err := db.QueryRow(`
         SELECT id, peel_id, stock_id, weight_type_id, accepted_weight, 
                sort_counter, created_at, updated_at 
-        FROM color_sort WHERE id = $1`, id).Scan(
+        FROM color_sort WHERE id = ?`, id).Scan(
 		&colorSort.ID,
 		&colorSort.PeelID,
 		&colorSort.StockID,
@@ -83,7 +83,7 @@ func CreateColorSort(c *gin.Context, db *sql.DB) {
             id, peel_id, stock_id, weight_type_id, accepted_weight, 
             sort_counter, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
         RETURNING created_at, updated_at`,
 		colorSort.ID,
 		colorSort.PeelID,
@@ -111,13 +111,13 @@ func UpdateColorSort(c *gin.Context, db *sql.DB) {
 
 	result, err := db.Exec(`
         UPDATE color_sort
-        SET peel_id = $1,
-            stock_id = $2,
-            weight_type_id = $3,
-            accepted_weight = $4,
-            sort_counter = $5,
+        SET peel_id = ?,
+            stock_id = ?,
+            weight_type_id = ?,
+            accepted_weight = ?,
+            sort_counter = ?,
             updated_at = NOW()
-        WHERE id = $6`,
+        WHERE id = ?`,
 		colorSort.PeelID,
 		colorSort.StockID,
 		colorSort.WeightTypeID,
@@ -147,7 +147,7 @@ func UpdateColorSort(c *gin.Context, db *sql.DB) {
 func DeleteColorSort(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
 
-	result, err := db.Exec("DELETE FROM color_sort WHERE id = $1", id)
+	result, err := db.Exec("DELETE FROM color_sort WHERE id = ?", id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -179,7 +179,7 @@ func GetColorSortsByStock(c *gin.Context, db *sql.DB) {
             SELECT id, peel_id, stock_id, weight_type_id, accepted_weight, 
                    sort_counter, created_at, updated_at 
             FROM color_sort 
-            WHERE stock_id = $1 AND sort_counter = $2
+            WHERE stock_id = ? AND sort_counter = ?
             ORDER BY created_at DESC`
 		args = []interface{}{stockID, counter}
 	} else {
@@ -187,7 +187,7 @@ func GetColorSortsByStock(c *gin.Context, db *sql.DB) {
             SELECT id, peel_id, stock_id, weight_type_id, accepted_weight, 
                    sort_counter, created_at, updated_at 
             FROM color_sort 
-            WHERE stock_id = $1
+            WHERE stock_id = ?
             ORDER BY created_at DESC`
 		args = []interface{}{stockID}
 	}
@@ -245,7 +245,7 @@ func GetAcceptedWeightSummary(c *gin.Context, db *sql.DB) {
             COALESCE(SUM(accepted_weight), 0) as total_accepted_weight,
             COUNT(*) as record_count
         FROM color_sort 
-        WHERE stock_id = $1 AND sort_counter = $2
+        WHERE stock_id = ? AND sort_counter = ?
         GROUP BY stock_id, sort_counter`,
 		stockID, counter,
 	).Scan(

@@ -48,7 +48,7 @@ func GetPeelingMachine(c *gin.Context, db *sql.DB) {
 	err := db.QueryRow(`
         SELECT id, humidifier_id, stock_id, weight_type_id, weight, 
                created_at, updated_at 
-        FROM peeling_machine WHERE id = $1`, id).Scan(
+        FROM peeling_machine WHERE id = ?`, id).Scan(
 		&machine.ID,
 		&machine.HumidifierID,
 		&machine.StockID,
@@ -78,14 +78,14 @@ func CreatePeelingMachine(c *gin.Context, db *sql.DB) {
 
 	err := db.QueryRow(`
         INSERT INTO peeling_machine (
-            humidifier_id, stock_id, weight_type_id, weight, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, NOW(), NOW())
-        RETURNING id, created_at, updated_at`,
-		machine.HumidifierID,
+            id, stock_id, weight, created_at, updated_at
+        )
+        VALUES (?, ?, ?, NOW(), NOW())
+        RETURNING created_at, updated_at`,
+		machine.ID,
 		machine.StockID,
-		machine.WeightTypeID,
 		machine.Weight,
-	).Scan(&machine.ID, &machine.CreatedAt, &machine.UpdatedAt)
+	).Scan(&machine.CreatedAt, &machine.UpdatedAt)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -105,12 +105,12 @@ func UpdatePeelingMachine(c *gin.Context, db *sql.DB) {
 
 	result, err := db.Exec(`
         UPDATE peeling_machine 
-        SET humidifier_id = $1,
-            stock_id = $2,
-            weight_type_id = $3,
-            weight = $4,
+        SET humidifier_id = ?,
+            stock_id = ?,
+            weight_type_id = ?,
+            weight = ?,
             updated_at = NOW()
-        WHERE id = $5`,
+        WHERE id = ?`,
 		machine.HumidifierID,
 		machine.StockID,
 		machine.WeightTypeID,
@@ -139,7 +139,7 @@ func UpdatePeelingMachine(c *gin.Context, db *sql.DB) {
 func DeletePeelingMachine(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
 
-	result, err := db.Exec("DELETE FROM peeling_machine WHERE id = $1", id)
+	result, err := db.Exec("DELETE FROM peeling_machine WHERE id = ?", id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -166,7 +166,7 @@ func GetPeelingMachinesByStockID(c *gin.Context, db *sql.DB) {
         SELECT id, humidifier_id, stock_id, weight_type_id, weight, 
                created_at, updated_at 
         FROM peeling_machine 
-        WHERE stock_id = $1
+        WHERE stock_id = ?
         ORDER BY created_at DESC`, stockID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
