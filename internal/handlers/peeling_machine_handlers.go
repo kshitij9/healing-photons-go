@@ -78,12 +78,13 @@ func CreatePeelingMachine(c *gin.Context, db *sql.DB) {
 
 	err := db.QueryRow(`
         INSERT INTO peeling_machine (
-            id, humidifier_id, stock_id, weight, created_at, updated_at
+            id, humidifier_id, stock_id, weight_type_id, weight, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, NOW(), NOW())`,
+        VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
 		machine.ID,
 		machine.HumidifierID,
 		machine.StockID,
+		machine.WeightTypeID,
 		machine.Weight,
 	).Scan(&machine.CreatedAt, &machine.UpdatedAt)
 
