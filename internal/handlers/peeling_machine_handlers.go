@@ -80,8 +80,7 @@ func CreatePeelingMachine(c *gin.Context, db *sql.DB) {
         INSERT INTO peeling_machine (
             id, stock_id, weight, created_at, updated_at
         )
-        VALUES (?, ?, ?, NOW(), NOW())
-        RETURNING created_at, updated_at`,
+        VALUES (?, ?, ?, NOW(), NOW())`,
 		machine.ID,
 		machine.StockID,
 		machine.Weight,
