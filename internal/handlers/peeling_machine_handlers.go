@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"healing_photons/internal/models"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -76,7 +77,7 @@ func CreatePeelingMachine(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	err := db.QueryRow(`
+	_, err := db.Exec(`
         INSERT INTO peeling_machine (
             id, humidifier_id, stock_id, weight_type_id, weight, created_at, updated_at
         )
@@ -86,7 +87,11 @@ func CreatePeelingMachine(c *gin.Context, db *sql.DB) {
 		machine.StockID,
 		machine.WeightTypeID,
 		machine.Weight,
-	).Scan(&machine.CreatedAt, &machine.UpdatedAt)
+	)
+
+	// Set timestamps manually since we can't get them from the insert
+	machine.CreatedAt = time.Now()
+	machine.UpdatedAt = time.Now()
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
