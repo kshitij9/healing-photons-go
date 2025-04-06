@@ -49,7 +49,7 @@ func GetPeelingMachine(c *gin.Context, db *sql.DB) {
 	err := db.QueryRow(`
         SELECT id, humidifier_id, stock_id, weight_type_id, weight, 
                created_at, updated_at 
-        FROM peeling_machine WHERE id = ?`, id).Scan(
+        FROM peeling_machine WHERE stock_id = ?`, id).Scan(
 		&machine.ID,
 		&machine.HumidifierID,
 		&machine.StockID,
