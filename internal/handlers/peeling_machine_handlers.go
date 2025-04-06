@@ -46,18 +46,39 @@ func GetPeelingMachine(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
 
 	var machine models.PeelingMachine
-	err := db.QueryRow(`
+	rows, err := db.Query(`
         SELECT id, humidifier_id, stock_id, weight_type_id, weight, 
                created_at, updated_at 
-        FROM peeling_machine WHERE stock_id = ?`, id).Scan(
-		&machine.ID,
-		&machine.HumidifierID,
-		&machine.StockID,
-		&machine.WeightTypeID,
-		&machine.Weight,
-		&machine.CreatedAt,
-		&machine.UpdatedAt,
-	)
+        FROM peeling_machine WHERE stock_id = ?`, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var machines []models.PeelingMachine
+	for rows.Next() {
+		if err := rows.Scan(
+			&machine.ID,
+			&machine.HumidifierID,
+			&machine.StockID,
+			&machine.WeightTypeID,
+			&machine.Weight,
+			&machine.CreatedAt,
+			&machine.UpdatedAt,
+		); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		machines = append(machines, machine)
+	}
+
+	if len(machines) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+		return
+	}
+
+	machine = machines[0]
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
 		return
