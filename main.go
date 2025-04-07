@@ -41,6 +41,7 @@ func main() {
 	handlers.SetupWeightTypeRoutes(router, db)
 	handlers.SetupPeelingMachineRoutes(router, db)
 	handlers.SetupHumidifierRoutes(router, db)
+	handlers.SetupGraderMachineOutputRoutes(router, db)
 
 	// Start server
 	port := cfg.Port
