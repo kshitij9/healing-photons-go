@@ -63,6 +63,43 @@ func GetHumidifier(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, humidifier)
 }
 
+// GetHumidifiersByStockID - Get all humidifiers for a specific stock
+func GetHumidifiersByStockID(c *gin.Context, db *sql.DB) {
+	stockID := c.Param("stock_id")
+
+	rows, err := db.Query(`
+        SELECT id, stock_id, weight, created_at, updated_at 
+        FROM humidifier WHERE stock_id = ?`, stockID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var humidifiers []models.Humidifier
+	for rows.Next() {
+		var humidifier models.Humidifier
+		if err := rows.Scan(
+			&humidifier.ID,
+			&humidifier.StockID,
+			&humidifier.Weight,
+			&humidifier.CreatedAt,
+			&humidifier.UpdatedAt,
+		); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		humidifiers = append(humidifiers, humidifier)
+	}
+
+	if len(humidifiers) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No humidifiers found for this stock"})
+		return
+	}
+
+	c.JSON(http.StatusOK, humidifiers)
+}
+
 // CreateHumidifier - Create new humidifier record
 func CreateHumidifier(c *gin.Context, db *sql.DB) {
 	var humidifier models.Humidifier
@@ -157,6 +194,7 @@ func DeleteHumidifier(c *gin.Context, db *sql.DB) {
 func SetupHumidifierRoutes(router *gin.Engine, db *sql.DB) {
 	router.GET("/humidifiers", func(c *gin.Context) { GetAllHumidifiers(c, db) })
 	router.GET("/humidifiers/:id", func(c *gin.Context) { GetHumidifier(c, db) })
+	router.GET("/humidifiers/stock/:stock_id", func(c *gin.Context) { GetHumidifiersByStockID(c, db) })
 	router.POST("/humidifiers", func(c *gin.Context) { CreateHumidifier(c, db) })
 	router.PUT("/humidifiers/:id", func(c *gin.Context) { UpdateHumidifier(c, db) })
 	router.DELETE("/humidifiers/:id", func(c *gin.Context) { DeleteHumidifier(c, db) })
