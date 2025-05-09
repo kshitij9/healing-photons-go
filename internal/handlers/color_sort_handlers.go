@@ -273,6 +273,51 @@ func GetAcceptedWeightSummary(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, summary)
 }
 
+// GetColorSortsByStockAndCounter - Get color sort records for a specific stock ID and sort counter
+func GetColorSortsByStockAndCounter(c *gin.Context, db *sql.DB) {
+	stockID := c.Param("stockId")
+	counter := c.Param("counter")
+
+	rows, err := db.Query(`
+        SELECT id, peel_id, stock_id, weight_type_id, accepted_weight, 
+               sort_counter, created_at, updated_at 
+        FROM color_sort 
+        WHERE stock_id = ? AND sort_counter = ?
+        ORDER BY created_at DESC`,
+		stockID, counter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var colorSorts []models.ColorSort
+	for rows.Next() {
+		var colorSort models.ColorSort
+		if err := rows.Scan(
+			&colorSort.ID,
+			&colorSort.PeelID,
+			&colorSort.StockID,
+			&colorSort.WeightTypeID,
+			&colorSort.AcceptedWeight,
+			&colorSort.SortCounter,
+			&colorSort.CreatedAt,
+			&colorSort.UpdatedAt,
+		); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		colorSorts = append(colorSorts, colorSort)
+	}
+
+	if len(colorSorts) == 0 {
+		c.JSON(http.StatusOK, []models.ColorSort{}) // Return empty array instead of null
+		return
+	}
+
+	c.JSON(http.StatusOK, colorSorts)
+}
+
 // SetupColorSortRoutes - Setup all routes for color sort
 func SetupColorSortRoutes(router *gin.Engine, db *sql.DB) {
 	router.GET("/color-sorts", func(c *gin.Context) { GetAllColorSorts(c, db) })
@@ -281,5 +326,6 @@ func SetupColorSortRoutes(router *gin.Engine, db *sql.DB) {
 	router.PUT("/color-sorts/:id", func(c *gin.Context) { UpdateColorSort(c, db) })
 	router.DELETE("/color-sorts/:id", func(c *gin.Context) { DeleteColorSort(c, db) })
 	router.GET("/color-sorts/stock/:stockId", func(c *gin.Context) { GetColorSortsByStock(c, db) })
+	router.GET("/color-sorts/stock/:stockId/counter/:counter", func(c *gin.Context) { GetColorSortsByStockAndCounter(c, db) })
 	router.GET("/color-sorts/stock/:stockId/counter/:counter/summary", func(c *gin.Context) { GetAcceptedWeightSummary(c, db) })
 }

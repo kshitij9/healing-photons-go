@@ -11,8 +11,8 @@ import (
 // GetAllMachineGradings - Get all machine grading records
 func GetAllMachineGradings(c *gin.Context, db *sql.DB) {
 	rows, err := db.Query(`
-        SELECT id, color_sort_id, stock_id, weight_type_id, 
-               grader_machine_outputs_id, weight, created_at, updated_at 
+        SELECT id, color_sort_id, stock_id, grader_machine_outputs_id, 
+               weight, created_at, updated_at 
         FROM machine_grading`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -27,7 +27,6 @@ func GetAllMachineGradings(c *gin.Context, db *sql.DB) {
 			&grading.ID,
 			&grading.ColorSortID,
 			&grading.StockID,
-			&grading.WeightTypeID,
 			&grading.GraderMachineOutputsID,
 			&grading.Weight,
 			&grading.CreatedAt,
@@ -47,13 +46,12 @@ func GetMachineGrading(c *gin.Context, db *sql.DB) {
 
 	var grading models.MachineGrading
 	err := db.QueryRow(`
-        SELECT id, color_sort_id, stock_id, weight_type_id, 
-               grader_machine_outputs_id, weight, created_at, updated_at 
+        SELECT id, color_sort_id, stock_id, grader_machine_outputs_id, 
+               weight, created_at, updated_at 
         FROM machine_grading WHERE id = ?`, id).Scan(
 		&grading.ID,
 		&grading.ColorSortID,
 		&grading.StockID,
-		&grading.WeightTypeID,
 		&grading.GraderMachineOutputsID,
 		&grading.Weight,
 		&grading.CreatedAt,
@@ -80,15 +78,14 @@ func CreateMachineGrading(c *gin.Context, db *sql.DB) {
 
 	err := db.QueryRow(`
         INSERT INTO machine_grading (
-            id, color_sort_id, stock_id, weight_type_id, 
-            grader_machine_outputs_id, weight, created_at, updated_at
+            id, color_sort_id, stock_id, grader_machine_outputs_id, 
+            weight, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
+        VALUES (?, ?, ?, ?, ?, NOW(), NOW())
         RETURNING created_at, updated_at`,
 		grading.ID,
 		grading.ColorSortID,
 		grading.StockID,
-		grading.WeightTypeID,
 		grading.GraderMachineOutputsID,
 		grading.Weight,
 	).Scan(&grading.CreatedAt, &grading.UpdatedAt)
@@ -113,14 +110,12 @@ func UpdateMachineGrading(c *gin.Context, db *sql.DB) {
         UPDATE machine_grading
         SET color_sort_id = ?,
             stock_id = ?,
-            weight_type_id = ?,
             grader_machine_outputs_id = ?,
             weight = ?,
             updated_at = NOW()
         WHERE id = ?`,
 		grading.ColorSortID,
 		grading.StockID,
-		grading.WeightTypeID,
 		grading.GraderMachineOutputsID,
 		grading.Weight,
 		id,
@@ -171,8 +166,8 @@ func GetMachineGradingsByStock(c *gin.Context, db *sql.DB) {
 	stockID := c.Param("stockId")
 
 	rows, err := db.Query(`
-        SELECT id, color_sort_id, stock_id, weight_type_id, 
-               grader_machine_outputs_id, weight, created_at, updated_at 
+        SELECT id, color_sort_id, stock_id, grader_machine_outputs_id, 
+               weight, created_at, updated_at 
         FROM machine_grading 
         WHERE stock_id = ?
         ORDER BY created_at DESC`, stockID)
@@ -189,7 +184,6 @@ func GetMachineGradingsByStock(c *gin.Context, db *sql.DB) {
 			&grading.ID,
 			&grading.ColorSortID,
 			&grading.StockID,
-			&grading.WeightTypeID,
 			&grading.GraderMachineOutputsID,
 			&grading.Weight,
 			&grading.CreatedAt,
