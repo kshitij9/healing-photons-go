@@ -43,6 +43,8 @@ func main() {
 	handlers.SetupHumidifierRoutes(router, db)
 	handlers.SetupGraderMachineOutputRoutes(router, db)
 	handlers.SetupColorSortRoutes(router, db)
+	handlers.SetupPiecesRoutes(router, db)
+	handlers.SetupSizeVariationsRoutes(router, db)
 
 	// Start server
 	port := cfg.Port
