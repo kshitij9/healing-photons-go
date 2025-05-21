@@ -11,7 +11,7 @@ import (
 // GetAllPieces - Get all pieces records
 func GetAllPieces(c *gin.Context, db *sql.DB) {
 	rows, err := db.Query(`
-        SELECT piece_id, size_value, description
+        SELECT piece_id, piece_code, description
         FROM pieces`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -41,7 +41,7 @@ func GetPiece(c *gin.Context, db *sql.DB) {
 
 	var piece models.Pieces
 	err := db.QueryRow(`
-        SELECT piece_id, size_value, description
+        SELECT piece_id, piece_code, description
         FROM pieces WHERE piece_id = ?`, id).Scan(
 		&piece.PieceID,
 		&piece.PieceCode,
@@ -68,7 +68,7 @@ func CreatePiece(c *gin.Context, db *sql.DB) {
 
 	result, err := db.Exec(`
         INSERT INTO pieces (
-            piece_id, size_value, description
+            piece_id, piece_code, description
         )
         VALUES (?, ?, ?)`,
 		piece.PieceID,
@@ -101,7 +101,7 @@ func UpdatePiece(c *gin.Context, db *sql.DB) {
 
 	result, err := db.Exec(`
         UPDATE pieces
-        SET size_value = ?,
+        SET piece_code = ?,
             description = ?
         WHERE piece_id = ?`,
 		piece.PieceCode,
