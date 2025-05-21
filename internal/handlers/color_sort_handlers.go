@@ -78,25 +78,46 @@ func CreateColorSort(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	err := db.QueryRow(`
+	// Insert the record
+	_, err := db.Exec(`
         INSERT INTO color_sort (
             id, peel_id, stock_id, weight_type_id, accepted_weight, 
             sort_counter, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-        RETURNING created_at, updated_at`,
+        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
 		colorSort.ID,
 		colorSort.PeelID,
 		colorSort.StockID,
 		colorSort.WeightTypeID,
 		colorSort.AcceptedWeight,
 		colorSort.SortCounter,
-	).Scan(&colorSort.CreatedAt, &colorSort.UpdatedAt)
+	)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Fetch the created record to get timestamps
+	err = db.QueryRow(`
+        SELECT id, peel_id, stock_id, weight_type_id, accepted_weight, 
+               sort_counter, created_at, updated_at 
+        FROM color_sort WHERE id = ?`, colorSort.ID).Scan(
+		&colorSort.ID,
+		&colorSort.PeelID,
+		&colorSort.StockID,
+		&colorSort.WeightTypeID,
+		&colorSort.AcceptedWeight,
+		&colorSort.SortCounter,
+		&colorSort.CreatedAt,
+		&colorSort.UpdatedAt,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusCreated, colorSort)
 }
 
