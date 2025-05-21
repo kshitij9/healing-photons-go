@@ -78,25 +78,46 @@ func CreateMachineGrading(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	err := db.QueryRow(`
+	// Insert the record
+	_, err := db.Exec(`
         INSERT INTO machine_grading (
             id, color_sort_id, stock_id, size_variations_id, pieces_id,
             weight, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-        RETURNING created_at, updated_at`,
+        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
 		grading.ID,
 		grading.ColorSortID,
 		grading.StockID,
 		grading.SizeVariationsID,
 		grading.PiecesID,
 		grading.Weight,
-	).Scan(&grading.CreatedAt, &grading.UpdatedAt)
+	)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Fetch the created record to get timestamps
+	err = db.QueryRow(`
+        SELECT id, color_sort_id, stock_id, size_variations_id, pieces_id,
+               weight, created_at, updated_at 
+        FROM machine_grading WHERE id = ?`, grading.ID).Scan(
+		&grading.ID,
+		&grading.ColorSortID,
+		&grading.StockID,
+		&grading.SizeVariationsID,
+		&grading.PiecesID,
+		&grading.Weight,
+		&grading.CreatedAt,
+		&grading.UpdatedAt,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusCreated, grading)
 }
 
