@@ -22,13 +22,17 @@ func GetAllPieces(c *gin.Context, db *sql.DB) {
 	var piecesList []models.Pieces
 	for rows.Next() {
 		var piece models.Pieces
+		var description sql.NullString
 		if err := rows.Scan(
 			&piece.PieceID,
 			&piece.PieceCode,
-			&piece.Description,
+			&description,
 		); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
+		}
+		if description.Valid {
+			piece.Description = &description.String
 		}
 		piecesList = append(piecesList, piece)
 	}
@@ -40,12 +44,13 @@ func GetPiece(c *gin.Context, db *sql.DB) {
 	id := c.Param("id")
 
 	var piece models.Pieces
+	var description sql.NullString
 	err := db.QueryRow(`
         SELECT piece_id, piece_code, description
         FROM pieces WHERE piece_id = ?`, id).Scan(
 		&piece.PieceID,
 		&piece.PieceCode,
-		&piece.Description,
+		&description,
 	)
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
@@ -54,6 +59,9 @@ func GetPiece(c *gin.Context, db *sql.DB) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+	if description.Valid {
+		piece.Description = &description.String
 	}
 	c.JSON(http.StatusOK, piece)
 }
@@ -73,7 +81,7 @@ func CreatePiece(c *gin.Context, db *sql.DB) {
         VALUES (?, ?, ?)`,
 		piece.PieceID,
 		piece.PieceCode,
-		piece.Description,
+		sql.NullString{String: piece.Description != nil ? *piece.Description : "", Valid: piece.Description != nil},
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -105,7 +113,7 @@ func UpdatePiece(c *gin.Context, db *sql.DB) {
             description = ?
         WHERE piece_id = ?`,
 		piece.PieceCode,
-		piece.Description,
+		sql.NullString{String: piece.Description != nil ? *piece.Description : "", Valid: piece.Description != nil},
 		id,
 	)
 	if err != nil {
