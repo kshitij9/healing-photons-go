@@ -46,7 +46,6 @@ func main() {
 	handlers.SetupColorSortRoutes(router, db)
 	handlers.SetupPiecesRoutes(router, db)
 	handlers.SetupSizeVariationsRoutes(router, db)
-	handlers.SetupMachineGradingInputRoutes(router, db)
 	handlers.SetupManualGradingInputRoutes(router, db)
 	handlers.SetupWorkforceRoutes(router, db)
 
