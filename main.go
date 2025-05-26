@@ -46,6 +46,7 @@ func main() {
 	handlers.SetupColorSortRoutes(router, db)
 	handlers.SetupPiecesRoutes(router, db)
 	handlers.SetupSizeVariationsRoutes(router, db)
+	handlers.SetupMachineGradingInputRoutes(router, db)
 
 	// Start server
 	port := cfg.Port
