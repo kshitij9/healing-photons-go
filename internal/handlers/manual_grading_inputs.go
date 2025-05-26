@@ -225,10 +225,10 @@ func GetManualGradingInputsByStock(c *gin.Context, db *sql.DB) {
 
 // SetupManualGradingInputRoutes - Setup all routes for machine grading inputs
 func SetupManualGradingInputRoutes(router *gin.Engine, db *sql.DB) {
-	router.GET("/machine-grading-inputs", func(c *gin.Context) { GetAllManualGradingInputs(c, db) })
-	router.GET("/machine-grading-inputs/:id", func(c *gin.Context) { GetManualGradingInput(c, db) })
-	router.POST("/machine-grading-inputs", func(c *gin.Context) { CreateManualGradingInput(c, db) })
-	router.PUT("/machine-grading-inputs/:id", func(c *gin.Context) { UpdateManualGradingInput(c, db) })
-	router.DELETE("/machine-grading-inputs/:id", func(c *gin.Context) { DeleteManualGradingInput(c, db) })
-	router.GET("/machine-grading-inputs/stock/:stockId", func(c *gin.Context) { GetManualGradingInputsByStock(c, db) })
+	router.GET("/manual-grading-inputs", func(c *gin.Context) { GetAllManualGradingInputs(c, db) })
+	router.GET("/manual-grading-inputs/:id", func(c *gin.Context) { GetManualGradingInput(c, db) })
+	router.POST("/manual-grading-inputs", func(c *gin.Context) { CreateManualGradingInput(c, db) })
+	router.PUT("/manual-grading-inputs/:id", func(c *gin.Context) { UpdateManualGradingInput(c, db) })
+	router.DELETE("/manual-grading-inputs/:id", func(c *gin.Context) { DeleteManualGradingInput(c, db) })
+	router.GET("/manual-grading-inputs/stock/:stockId", func(c *gin.Context) { GetManualGradingInputsByStock(c, db) })
 } 
