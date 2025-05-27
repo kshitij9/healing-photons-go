@@ -48,8 +48,7 @@ func main() {
 	handlers.SetupSizeVariationsRoutes(router, db)
 	handlers.SetupManualGradingInputRoutes(router, db)
 	handlers.SetupWorkforceRoutes(router, db)
-
-
+	handlers.SetupGradingCategoryRoutes(router, db)
 
 	// Start server
 	port := cfg.Port
