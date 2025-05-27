@@ -84,7 +84,7 @@ func CreateManualGrading(c *gin.Context, db *sql.DB) {
 	}
 
 	// Insert the record
-	result, err := db.Exec(`
+	_, err := db.Exec(`
 		INSERT INTO manual_grading (
 			id, grader_machine_outputs_id, stock_id, category_id, 
 			size_id, piece_id, weight, worker_id, created_at, updated_at
@@ -103,7 +103,29 @@ func CreateManualGrading(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, grading)
+	// Fetch the created record to get timestamps
+	err = db.QueryRow(`
+        SELECT id, grader_machine_outputs_id, stock_id, category_id, 
+			size_id, piece_id, weight, worker_id, created_at, updated_at
+        FROM manual_grading WHERE id = ?`, grading.ID).Scan(
+		&grading.ID,
+		&grading.GraderMachineOutputsID,
+		&grading.StockID,
+		&grading.CategoryID,
+		&grading.SizeID,
+		&grading.PieceID,
+		&grading.Weight,
+		&grading.WorkerID,
+		&grading.CreatedAt,
+		&input.UpdatedAt,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, input)
 }
 
 // UpdateManualGrading - Update existing manual grading record
