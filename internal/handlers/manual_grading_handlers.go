@@ -118,7 +118,7 @@ func CreateManualGrading(c *gin.Context, db *sql.DB) {
 		&grading.Weight,
 		&grading.WorkerID,
 		&grading.CreatedAt,
-		&input.UpdatedAt,
+		&grading.UpdatedAt,
 	)
 
 	if err != nil {
@@ -126,7 +126,7 @@ func CreateManualGrading(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, input)
+	c.JSON(http.StatusCreated, grading)
 }
 
 // UpdateManualGrading - Update existing manual grading record
