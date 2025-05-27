@@ -86,10 +86,10 @@ func CreateManualGrading(c *gin.Context, db *sql.DB) {
 	// Insert the record
 	result, err := db.Exec(`
 		INSERT INTO manual_grading (
-			grader_machine_outputs_id, stock_id, category_id, 
+			id, grader_machine_outputs_id, stock_id, category_id, 
 			size_id, piece_id, weight, worker_id, created_at, updated_at
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
 		grading.GraderMachineOutputsID,
 		grading.StockID,
 		grading.CategoryID,
@@ -102,14 +102,6 @@ func CreateManualGrading(c *gin.Context, db *sql.DB) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	// Get the inserted ID
-	id, err := result.LastInsertId()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	grading.ID = id
 
 	c.JSON(http.StatusCreated, grading)
 }
