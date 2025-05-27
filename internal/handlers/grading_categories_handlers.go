@@ -69,11 +69,12 @@ func CreateGradingCategory(c *gin.Context, db *sql.DB) {
 	}
 
 	// Insert the record
-	result, err := db.Exec(`
+	_, err := db.Exec(`
 		INSERT INTO grading_categories (
-			category_code, description
+			category_id, category_code, description
 		)
-		VALUES (?, ?)`,
+		VALUES (?, ?, ?)`,
+		category.CategoryID,
 		category.CategoryCode,
 		category.Description,
 	)
@@ -82,13 +83,19 @@ func CreateGradingCategory(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	// Get the inserted ID
-	id, err := result.LastInsertId()
+	// Fetch the created record to get timestamps
+	err = db.QueryRow(`
+		SELECT category_id, category_code, description
+		FROM grading_categories WHERE category_id = ?`, category.CategoryID).Scan(
+		&category.CategoryID,
+		&category.CategoryCode,
+		&category.Description,
+	)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	category.CategoryID = id
 
 	c.JSON(http.StatusCreated, category)
 }
@@ -154,12 +161,9 @@ func DeleteGradingCategory(c *gin.Context, db *sql.DB) {
 
 // SetupGradingCategoryRoutes sets up all the routes for grading categories
 func SetupGradingCategoryRoutes(router *gin.Engine, db *sql.DB) {
-	gradingCategories := router.Group("/api/grading-categories")
-	{
-		gradingCategories.GET("", func(c *gin.Context) { GetAllGradingCategories(c, db) })
-		gradingCategories.GET("/:id", func(c *gin.Context) { GetGradingCategory(c, db) })
-		gradingCategories.POST("", func(c *gin.Context) { CreateGradingCategory(c, db) })
-		gradingCategories.PUT("/:id", func(c *gin.Context) { UpdateGradingCategory(c, db) })
-		gradingCategories.DELETE("/:id", func(c *gin.Context) { DeleteGradingCategory(c, db) })
-	}
+	router.GET("/grading-categories", func(c *gin.Context) { GetAllGradingCategories(c, db) })
+	router.GET("/grading-categories/:id", func(c *gin.Context) { GetGradingCategory(c, db) })
+	router.POST("/grading-categories", func(c *gin.Context) { CreateGradingCategory(c, db) })
+	router.PUT("/grading-categories/:id", func(c *gin.Context) { UpdateGradingCategory(c, db) })
+	router.DELETE("/grading-categories/:id", func(c *gin.Context) { DeleteGradingCategory(c, db) })
 } 
