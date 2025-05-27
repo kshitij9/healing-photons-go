@@ -90,6 +90,7 @@ func CreateManualGrading(c *gin.Context, db *sql.DB) {
 			size_id, piece_id, weight, worker_id, created_at, updated_at
 		)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+		grading.ID,
 		grading.GraderMachineOutputsID,
 		grading.StockID,
 		grading.CategoryID,
