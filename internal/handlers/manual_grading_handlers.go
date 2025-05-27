@@ -84,13 +84,12 @@ func CreateManualGrading(c *gin.Context, db *sql.DB) {
 	}
 
 	// Insert the record
-	_, err := db.Exec(`
+	result, err := db.Exec(`
 		INSERT INTO manual_grading (
-			id, grader_machine_outputs_id, stock_id, category_id, 
+			grader_machine_outputs_id, stock_id, category_id, 
 			size_id, piece_id, weight, worker_id, created_at, updated_at
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-		grading.ID,
+		VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
 		grading.GraderMachineOutputsID,
 		grading.StockID,
 		grading.CategoryID,
@@ -99,33 +98,18 @@ func CreateManualGrading(c *gin.Context, db *sql.DB) {
 		grading.Weight,
 		grading.WorkerID,
 	)
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Fetch the created record to get timestamps
-	err = db.QueryRow(`
-		SELECT id, grader_machine_outputs_id, stock_id, category_id, 
-			size_id, piece_id, weight, worker_id, created_at, updated_at
-		FROM manual_grading WHERE id = ?`, grading.ID).Scan(
-		&grading.ID,
-		&grading.GraderMachineOutputsID,
-		&grading.StockID,
-		&grading.CategoryID,
-		&grading.SizeID,
-		&grading.PieceID,
-		&grading.Weight,
-		&grading.WorkerID,
-		&grading.CreatedAt,
-		&grading.UpdatedAt,
-	)
-
+	// Get the inserted ID
+	id, err := result.LastInsertId()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	grading.ID = id
 
 	c.JSON(http.StatusCreated, grading)
 }
@@ -241,13 +225,10 @@ func GetManualGradingsByStock(c *gin.Context, db *sql.DB) {
 
 // SetupManualGradingRoutes sets up all the routes for manual grading
 func SetupManualGradingRoutes(router *gin.Engine, db *sql.DB) {
-	manualGrading := router.Group("/api/manual-grading")
-	{
-		manualGrading.GET("", func(c *gin.Context) { GetAllManualGradings(c, db) })
-		manualGrading.GET("/:id", func(c *gin.Context) { GetManualGrading(c, db) })
-		manualGrading.POST("", func(c *gin.Context) { CreateManualGrading(c, db) })
-		manualGrading.PUT("/:id", func(c *gin.Context) { UpdateManualGrading(c, db) })
-		manualGrading.DELETE("/:id", func(c *gin.Context) { DeleteManualGrading(c, db) })
-		manualGrading.GET("/stock/:stockId", func(c *gin.Context) { GetManualGradingsByStock(c, db) })
-	}
+	router.GET("/manual-grading", func(c *gin.Context) { GetAllManualGradings(c, db) })
+	router.GET("/manual-grading/:id", func(c *gin.Context) { GetManualGrading(c, db) })
+	router.POST("/manual-grading", func(c *gin.Context) { CreateManualGrading(c, db) })
+	router.PUT("/manual-grading/:id", func(c *gin.Context) { UpdateManualGrading(c, db) })
+	router.DELETE("/manual-grading/:id", func(c *gin.Context) { DeleteManualGrading(c, db) })
+	router.GET("/manual-grading/stock/:stockId", func(c *gin.Context) { GetManualGradingsByStock(c, db) })
 } 
